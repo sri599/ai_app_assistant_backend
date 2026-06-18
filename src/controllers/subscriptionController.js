@@ -1,6 +1,6 @@
 const plans = require("../data/plans");
 const subscriptions = require("../data/subscriptions");
-
+const users = require("../data/users");
 exports.getPlans = async (req, res) => {
   try {
     res.json({
@@ -51,6 +51,22 @@ exports.activateSubscription = async (req, res) => {
     };
 
     subscriptions.push(subscription);
+    const user = users.find(
+  (u) => u.id === req.userId
+);
+
+if (user) {
+  user.subscriptionStatus = "active";
+
+  user.subscription = {
+    planId: plan.id,
+    planName: plan.name,
+    amount: plan.price,
+    startDate,
+    expiryDate,
+    status: "active",
+  };
+}
 
     res.json({
       success: true,

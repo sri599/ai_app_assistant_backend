@@ -23,14 +23,16 @@ exports.register = async (req, res) => {
       10
     );
 
+
     const user = {
-      id: Date.now().toString(),
-      name,
-      phoneNumber,
-      password: hashedPassword,
-      aiNumber: null,
-      subscriptionStatus: "inactive",
-    };
+  id: Date.now().toString(),
+  name,
+  phoneNumber,
+  password: hashedPassword,
+  aiNumber: null,
+  subscriptionStatus: "inactive",
+  subscription: null
+};
 
     users.push(user);
 
