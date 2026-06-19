@@ -32,34 +32,57 @@ const subscriptions = require("../data/subscriptions");
       numbers
     });
   };
-exports.dashboard =
-  async (req, res) => {
-    try {
+exports.dashboard = async (req, res) => {
+  try {
 
-      const totalUsers =
-        await User.countDocuments({
-          role: "user"
-        });
-
-      const totalAdmins =
-        await User.countDocuments({
-          role: "admin"
-        });
-
-      res.json({
-        success: true,
-        totalUsers,
-        totalAdmins
+    const totalUsers =
+      await User.countDocuments({
+        role: "user"
       });
 
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message:
-          error.message
+    const totalAdmins =
+      await User.countDocuments({
+        role: "admin"
       });
-    }
-  };
+
+    const totalAiNumbers =
+      await AiNumber.countDocuments();
+
+    const assignedNumbers =
+      await AiNumber.countDocuments({
+        status: "assigned"
+      });
+
+    const freeNumbers =
+      await AiNumber.countDocuments({
+        status: "free"
+      });
+
+    const activeSubscriptions =
+      await User.countDocuments({
+        subscriptionStatus: "active"
+      });
+
+    res.json({
+      success: true,
+
+      totalUsers,
+      totalAdmins,
+
+      totalAiNumbers,
+      assignedNumbers,
+      freeNumbers,
+
+      activeSubscriptions
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 
 exports.getUsers = async (
   req,
