@@ -1,15 +1,16 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const users = require("../data/users");
+const User = require("../models/User");
 
 exports.register = async (req, res) => {
   try {
     const { name, phoneNumber, password } = req.body;
 
-    const existingUser = users.find(
-      (u) => u.phoneNumber === phoneNumber
-    );
+    const existingUser =
+  await User.findOne({
+    phoneNumber
+  });
 
     if (existingUser) {
       return res.status(400).json({
@@ -34,7 +35,7 @@ const user = {
   role: "user"
 };
 
-    users.push(user);
+    await user.save();
 
     res.json({
       success: true,
@@ -53,9 +54,10 @@ exports.login = async (req, res) => {
   try {
     const { phoneNumber, password } = req.body;
 
-    const user = users.find(
-      (u) => u.phoneNumber === phoneNumber
-    );
+    const user =
+  await User.findOne({
+    phoneNumber
+  });
 
     if (!user) {
       return res.status(400).json({
@@ -78,7 +80,7 @@ exports.login = async (req, res) => {
 
     const token = jwt.sign(
       {
-        userId: user.id,
+        userId: user._id
       },
       process.env.JWT_SECRET,
       {
@@ -100,8 +102,9 @@ exports.login = async (req, res) => {
 };
 
 exports.profile = async (req, res) => {
-  const user = users.find(
-    (u) => u.id === req.userId
+  const user =
+  await User.findById(
+    req.userId
   );
 
   res.json({
