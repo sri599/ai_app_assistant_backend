@@ -23,15 +23,15 @@ exports.register = async (req, res) => {
       10
     );
 
-
-    const user = {
+const user = {
   id: Date.now().toString(),
   name,
   phoneNumber,
   password: hashedPassword,
   aiNumber: null,
   subscriptionStatus: "inactive",
-  subscription: null
+  subscription: null,
+  role: "user"
 };
 
     users.push(user);
@@ -87,9 +87,10 @@ exports.login = async (req, res) => {
     );
 
     res.json({
-      success: true,
-      token,
-    });
+  success: true,
+  token,
+  role: user.role
+});
   } catch (error) {
     res.status(500).json({
       success: false,
