@@ -448,3 +448,47 @@ exports.addAiNumber =
       });
     }
   };
+  exports.makeAiNumberFree = async (req, res) => {
+  try {
+    const number = await AiNumber.findById(req.params.id);
+
+    if (!number) {
+      return res.status(404).json({
+        success: false,
+        message: "AI Number not found"
+      });
+    }
+
+    // also remove from user if assigned
+    if (number.assignedTo) {
+      const user = await User.findById(number.assignedTo);
+
+      if (user) {
+        user.aiNumber = null;
+        await user.save();
+      }
+    }
+
+    number.status = "free";
+    number.assignedTo = null;
+
+    await number.save();
+
+    res.json({
+      success: true,
+      message: "AI Number set to FREE"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+router.patch(
+  "/ai-number/free/:id",
+  authMiddleware,
+  adminMiddleware,
+  adminController.makeAiNumberFree
+);

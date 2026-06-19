@@ -20,6 +20,18 @@ router.patch(
   adminMiddleware,
   adminController.restoreUser
 );
+router.patch(
+  "/ai-number/free/:id",
+  authMiddleware,
+  adminMiddleware,
+  adminController.makeAiNumberFree
+);
+router.post(
+  "/ai-number/swap",
+  authMiddleware,
+  adminMiddleware,
+  adminController.swapAiNumbers
+);
 
 router.get(
   "/users/deleted",
