@@ -1,5 +1,4 @@
-// controllers/adminController.js
-
+const bcrypt = require("bcryptjs");
 const users = require("../data/users");
 const subscriptions = require("../data/subscriptions");
 
