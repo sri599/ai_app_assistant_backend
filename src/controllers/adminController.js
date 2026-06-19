@@ -91,11 +91,15 @@ exports.getUsers = async (
   try {
 
     const users =
-      await User.find()
-        .select("-password");
+      await User.find({
+        role: "user"
+      }).select(
+        "-password"
+      );
 
     res.json({
       success: true,
+      count: users.length,
       users
     });
 
@@ -248,6 +252,7 @@ exports.getAdmins =
 
       res.json({
         success: true,
+        count: admins.length,
         admins
       });
 
