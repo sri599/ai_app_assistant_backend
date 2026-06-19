@@ -7,6 +7,26 @@ const adminController = require("../controllers/adminController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 const adminMiddleware = require("../middleware/adminMiddleware");
+router.delete(
+  "/users/:id",
+  authMiddleware,
+  adminMiddleware,
+  adminController.deleteUser
+);
+
+router.patch(
+  "/users/restore/:id",
+  authMiddleware,
+  adminMiddleware,
+  adminController.restoreUser
+);
+
+router.get(
+  "/users/deleted",
+  authMiddleware,
+  adminMiddleware,
+  adminController.getDeletedUsers
+);
 
 router.post(
   "/create",

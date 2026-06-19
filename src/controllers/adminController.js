@@ -4,19 +4,29 @@ const subscriptions = require("../data/subscriptions");
  const AiNumber =
   require("../models/AiNumber");
 
-  exports.deleteAiNumber =
-  async (req, res) => {
+  exports.deleteAiNumber = async (req, res) => {
+  try {
+    const number = await AiNumber.findByIdAndDelete(req.params.id);
 
-    await AiNumber.findByIdAndDelete(
-      req.params.id
-    );
+    if (!number) {
+      return res.status(404).json({
+        success: false,
+        message: "AI Number not found"
+      });
+    }
 
     res.json({
       success: true,
-      message:
-        "Deleted successfully"
+      message: "Deleted successfully"
     });
-  };
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
   exports.getAiNumbers =
   async (req, res) => {
 
@@ -69,17 +79,13 @@ const subscriptions = require("../data/subscriptions");
     });
   }
 };
-exports.deleteAdmin = async (
-  req,
-  res
-) => {
-  try {
 
-    const admin =
-      await User.findOne({
-        _id: req.params.id,
-        role: "admin"
-      });
+exports.deleteAdmin = async (req, res) => {
+  try {
+    const admin = await User.findOne({
+      _id: req.params.id,
+      role: "admin"
+    });
 
     if (!admin) {
       return res.status(404).json({
@@ -95,8 +101,7 @@ exports.deleteAdmin = async (
 
     res.json({
       success: true,
-      message:
-        "Admin deleted successfully"
+      message: "Admin deleted"
     });
 
   } catch (error) {
@@ -291,10 +296,18 @@ exports.assignAiNumber =
         });
       }
 
-      user.aiNumber =
-        aiNumber;
+      const number = await AiNumber.findOne({ phoneNumber: aiNumber });
 
-      await user.save();
+if (!number) {
+  return res.status(404).json({
+    success: false,
+    message: "AI Number not found"
+  });
+}
+
+number.status = "assigned";
+number.assignedTo = user._id;
+await number.save();
 
       res.json({
         success: true,
@@ -394,38 +407,7 @@ exports.getAdmins =
     }
   };
 
-  exports.deleteAdmin =
-  async (req, res) => {
-    try {
-
-      const admin =
-        await User.findOneAndDelete({
-          _id: req.params.id,
-          role: "admin"
-        });
-
-      if (!admin) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Admin not found"
-        });
-      }
-
-      res.json({
-        success: true,
-        message:
-          "Admin deleted"
-      });
-
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message:
-          error.message
-      });
-    }
-  };
+ 
 
 exports.addAiNumber =
   async (req, res) => {
