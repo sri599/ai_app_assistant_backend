@@ -32,17 +32,144 @@ const subscriptions = require("../data/subscriptions");
       numbers
     });
   };
+  exports.deleteUser = async (
+  req,
+  res
+) => {
+  try {
+
+    const user =
+      await User.findOne({
+        _id: req.params.id,
+        role: "user"
+      });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message:
+        "User deleted successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+exports.deleteAdmin = async (
+  req,
+  res
+) => {
+  try {
+
+    const admin =
+      await User.findOne({
+        _id: req.params.id,
+        role: "admin"
+      });
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found"
+      });
+    }
+
+    admin.isDeleted = true;
+    admin.deletedAt = new Date();
+
+    await admin.save();
+
+    res.json({
+      success: true,
+      message:
+        "Admin deleted successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+exports.restoreUser = async (
+  req,
+  res
+) => {
+  try {
+
+    const user =
+      await User.findById(
+        req.params.id
+      );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    user.isDeleted = false;
+    user.deletedAt = null;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message:
+        "Restored successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+exports.getDeletedUsers =
+  async (req, res) => {
+
+    const users =
+      await User.find({
+        isDeleted: true
+      }).select(
+        "-password"
+      );
+
+    res.json({
+      success: true,
+      users
+    });
+  };
 exports.dashboard = async (req, res) => {
   try {
 
     const totalUsers =
       await User.countDocuments({
-        role: "user"
+        role: "user",
+        isDeleted: false
       });
 
     const totalAdmins =
       await User.countDocuments({
-        role: "admin"
+        role: "admin",
+        isDeleted: false
       });
 
     const totalAiNumbers =
@@ -92,7 +219,8 @@ exports.getUsers = async (
 
     const users =
       await User.find({
-        role: "user"
+        role: "user",
+        isDeleted: false
       }).select(
         "-password"
       );
@@ -245,7 +373,8 @@ exports.getAdmins =
 
       const admins =
         await User.find({
-          role: "admin"
+          role: "admin",
+          isDeleted: false
         }).select(
           "-password"
         );

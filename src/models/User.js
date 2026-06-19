@@ -37,7 +37,16 @@ const userSchema = new mongoose.Schema(
     subscription: {
       type: Object,
       default: null
-    }
+    },
+    isDeleted: {
+  type: Boolean,
+  default: false
+},
+
+deletedAt: {
+  type: Date,
+  default: null
+}
   },
   {
     timestamps: true
