@@ -12,7 +12,18 @@ router.post(
   "/create",
   adminController.createAdmin
 );
-
+router.post(
+  "/ai-number",
+  authMiddleware,
+  adminMiddleware,
+  adminController.addAiNumber
+);
+router.get(
+  "/ai-numbers",
+  authMiddleware,
+  adminMiddleware,
+  adminController.getAiNumbers
+);
 router.get(
   "/dashboard",
   authMiddleware,
@@ -46,6 +57,12 @@ router.get(
   authMiddleware,
   adminMiddleware,
   adminController.getAdmins
+);
+router.delete(
+  "/ai-number/:id",
+  authMiddleware,
+  adminMiddleware,
+  adminController.deleteAiNumber
 );
 
 router.delete(

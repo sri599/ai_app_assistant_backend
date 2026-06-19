@@ -1,7 +1,37 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const subscriptions = require("../data/subscriptions");
+ const AiNumber =
+  require("../models/AiNumber");
 
+  exports.deleteAiNumber =
+  async (req, res) => {
+
+    await AiNumber.findByIdAndDelete(
+      req.params.id
+    );
+
+    res.json({
+      success: true,
+      message:
+        "Deleted successfully"
+    });
+  };
+  exports.getAiNumbers =
+  async (req, res) => {
+
+    const numbers =
+      await AiNumber.find()
+        .populate(
+          "assignedTo",
+          "name phoneNumber"
+        );
+
+    res.json({
+      success: true,
+      numbers
+    });
+  };
 exports.dashboard =
   async (req, res) => {
     try {
@@ -229,6 +259,46 @@ exports.getAdmins =
         success: true,
         message:
           "Admin deleted"
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message:
+          error.message
+      });
+    }
+  };
+
+exports.addAiNumber =
+  async (req, res) => {
+    try {
+
+      const {
+        phoneNumber
+      } = req.body;
+
+      const existing =
+        await AiNumber.findOne({
+          phoneNumber
+        });
+
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Number already exists"
+        });
+      }
+
+      const number =
+        await AiNumber.create({
+          phoneNumber
+        });
+
+      res.json({
+        success: true,
+        number
       });
 
     } catch (error) {

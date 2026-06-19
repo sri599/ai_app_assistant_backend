@@ -8,6 +8,10 @@ const subscriptionRoutes = require(
 const adminRoutes = require(
   "./routes/adminRoutes"
 );
+const aiNumberRoutes =
+  require(
+    "./routes/aiNumberRoutes"
+  );
 const app = express();
 
 app.use(cors());
@@ -30,5 +34,10 @@ app.use("/api/auth", authRoutes);
 app.use(
   "/api/subscription",
   subscriptionRoutes
+);
+
+app.use(
+  "/api/ai-numbers",
+  aiNumberRoutes
 );
 module.exports = app;
