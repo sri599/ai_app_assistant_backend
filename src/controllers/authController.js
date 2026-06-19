@@ -7,15 +7,14 @@ exports.register = async (req, res) => {
   try {
     const { name, phoneNumber, password } = req.body;
 
-    const existingUser =
-  await User.findOne({
-    phoneNumber
-  });
+    const existingUser = await User.findOne({
+      phoneNumber
+    });
 
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "User already exists",
+        message: "User already exists"
       });
     }
 
@@ -24,28 +23,28 @@ exports.register = async (req, res) => {
       10
     );
 
-const user = {
-  id: Date.now().toString(),
-  name,
-  phoneNumber,
-  password: hashedPassword,
-  aiNumber: null,
-  subscriptionStatus: "inactive",
-  subscription: null,
-  role: "user"
-};
+    const user = new User({
+      name,
+      phoneNumber,
+      password: hashedPassword,
+      role: "user",
+      aiNumber: null,
+      subscriptionStatus: "inactive",
+      subscription: null
+    });
 
     await user.save();
 
     res.json({
       success: true,
       message: "User registered",
-      user,
+      user
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message
     });
   }
 };
@@ -102,13 +101,20 @@ exports.login = async (req, res) => {
 };
 
 exports.profile = async (req, res) => {
-  const user =
-  await User.findById(
-    req.userId
-  );
+  try {
+    const user = await User.findById(
+      req.userId
+    ).select("-password");
 
-  res.json({
-    success: true,
-    user,
-  });
+    res.json({
+      success: true,
+      user
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
