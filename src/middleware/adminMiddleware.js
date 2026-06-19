@@ -1,17 +1,33 @@
+const User = require("../models/User");
 
-const users = require("../data/users");
+module.exports = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const user =
+      await User.findById(
+        req.userId
+      );
 
-module.exports = (req, res, next) => {
-  const user = users.find(
-    (u) => u.id === req.userId
-  );
+    if (
+      !user ||
+      user.role !== "admin"
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Admin access required"
+      });
+    }
 
-  if (!user || user.role !== "admin") {
-    return res.status(403).json({
+    next();
+
+  } catch (error) {
+    res.status(500).json({
       success: false,
-      message: "Admin access required"
+      message: error.message
     });
   }
-
-  next();
 };
