@@ -274,55 +274,71 @@ exports.getUserById =
       });
     }
   };
-exports.assignAiNumber =
-  async (req, res) => {
-    try {
+exports.assignAiNumber = async (req, res) => {
+  try {
 
-      const {
-        userId,
-        aiNumber
-      } = req.body;
+    const { userId, aiNumber } = req.body;
 
-      const user =
-        await User.findById(
-          userId
-        );
+    const user = await User.findById(userId);
 
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "User not found"
-        });
-      }
-
-      const number = await AiNumber.findOne({ phoneNumber: aiNumber });
-
-if (!number) {
-  return res.status(404).json({
-    success: false,
-    message: "AI Number not found"
-  });
-}
-
-number.status = "assigned";
-number.assignedTo = user._id;
-await number.save();
-
-      res.json({
-        success: true,
-        message:
-          "AI number assigned"
-      });
-
-    } catch (error) {
-      res.status(500).json({
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        message:
-          error.message
+        message: "User not found"
       });
     }
-  };
+
+    const number = await AiNumber.findOne({
+      phoneNumber: aiNumber
+    });
+
+    if (!number) {
+      return res.status(404).json({
+        success: false,
+        message: "AI Number not found"
+      });
+    }
+
+    if (number.status === "assigned") {
+      return res.status(400).json({
+        success: false,
+        message: "AI Number already assigned"
+      });
+    }
+
+    // Release old number if user already has one
+    if (user.aiNumber) {
+      const oldNumber = await AiNumber.findOne({
+        phoneNumber: user.aiNumber
+      });
+
+      if (oldNumber) {
+        oldNumber.status = "free";
+        oldNumber.assignedTo = null;
+        await oldNumber.save();
+      }
+    }
+
+    user.aiNumber = number.phoneNumber;
+    await user.save();
+
+    number.status = "assigned";
+    number.assignedTo = user._id;
+    await number.save();
+
+    res.json({
+      success: true,
+      message: "AI Number assigned successfully",
+      aiNumber: number.phoneNumber
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 exports.createAdmin = async (
   req,
   res
