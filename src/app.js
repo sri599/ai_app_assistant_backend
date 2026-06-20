@@ -12,6 +12,8 @@ const aiNumberRoutes =
   require(
     "./routes/aiNumberRoutes"
   );
+  const callLogRoutes =
+  require("./routes/callLogRoutes");
 const app = express();
 
 app.use(cors());
@@ -39,5 +41,11 @@ app.use(
 app.use(
   "/api/ai-numbers",
   aiNumberRoutes
+);
+
+
+app.use(
+  "/api/call-logs",
+  callLogRoutes
 );
 module.exports = app;
