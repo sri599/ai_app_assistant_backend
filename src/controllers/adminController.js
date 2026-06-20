@@ -486,3 +486,98 @@ exports.addAiNumber =
     });
   }
 };
+exports.makeAiNumberFree = async (req, res) => {
+  try {
+    const number = await AiNumber.findById(req.params.id);
+
+    if (!number) {
+      return res.status(404).json({
+        success: false,
+        message: "AI Number not found"
+      });
+    }
+
+    if (number.assignedTo) {
+      const user = await User.findById(number.assignedTo);
+
+      if (user) {
+        user.aiNumber = null;
+        await user.save();
+      }
+    }
+
+    number.status = "free";
+    number.assignedTo = null;
+
+    await number.save();
+
+    res.json({
+      success: true,
+      message: "AI Number made free successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+exports.swapAiNumbers = async (req, res) => {
+  try {
+
+    const { userId1, userId2 } = req.body;
+
+    const user1 = await User.findById(userId1);
+    const user2 = await User.findById(userId2);
+
+    if (!user1 || !user2) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    const user1Number = user1.aiNumber;
+    const user2Number = user2.aiNumber;
+
+    user1.aiNumber = user2Number;
+    user2.aiNumber = user1Number;
+
+    await user1.save();
+    await user2.save();
+
+    if (user1Number) {
+      const ai1 = await AiNumber.findOne({
+        phoneNumber: user1Number
+      });
+
+      if (ai1) {
+        ai1.assignedTo = user2._id;
+        await ai1.save();
+      }
+    }
+
+    if (user2Number) {
+      const ai2 = await AiNumber.findOne({
+        phoneNumber: user2Number
+      });
+
+      if (ai2) {
+        ai2.assignedTo = user1._id;
+        await ai2.save();
+      }
+    }
+
+    res.json({
+      success: true,
+      message: "AI Numbers swapped successfully"
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
