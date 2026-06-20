@@ -486,9 +486,3 @@ exports.addAiNumber =
     });
   }
 };
-router.patch(
-  "/ai-number/free/:id",
-  authMiddleware,
-  adminMiddleware,
-  adminController.makeAiNumberFree
-);
