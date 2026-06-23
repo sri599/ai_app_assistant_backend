@@ -6,6 +6,13 @@ const callLogController =
   require(
     "../controllers/callLogController"
   );
+  const auth =
+  require("../middleware/auth");
+  router.get(
+  "/my-calls",
+  auth,
+  callLogController.getMyCallLogs
+);
 
 router.post(
   "/",

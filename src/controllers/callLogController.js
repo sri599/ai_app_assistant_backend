@@ -1,5 +1,5 @@
 const CallLog = require("../models/CallLog");
-
+const User = require("../models/User");
 
 // CREATE
 exports.createCallLog = async (
@@ -16,9 +16,13 @@ exports.createCallLog = async (
 
     const extra =
       analytics.extra_information || {};
+      const user = await User.findOne({
+  aiNumber: extra.to
+});
 
     const callLog =
       await CallLog.create({
+        userId: user?._id || null,
 
         summary:
           analytics.summary || "",
@@ -119,7 +123,33 @@ exports.getCallLogs = async (
     });
   }
 };
+exports.getMyCallLogs =
+  async (req, res) => {
+    try {
 
+      const logs =
+        await CallLog.find({
+          userId: req.userId
+        })
+        .sort({
+          createdAt: -1
+        });
+
+      res.json({
+        success: true,
+        count: logs.length,
+        logs
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        success: false,
+        message:
+          error.message
+      });
+    }
+  };
 
 // GET BY ID
 exports.getCallLogById =

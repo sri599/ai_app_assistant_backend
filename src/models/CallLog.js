@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const CallLogSchema = new mongoose.Schema(
   {
+    userId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null
+},
     summary: {
       type: String,
       default: ""
