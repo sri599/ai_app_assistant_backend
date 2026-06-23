@@ -7,7 +7,7 @@ const callLogController =
     "../controllers/callLogController"
   );
   const auth =
-  require("../middleware/auth");
+  require("../middleware/authMiddleware");
   router.get(
   "/my-calls",
   auth,
