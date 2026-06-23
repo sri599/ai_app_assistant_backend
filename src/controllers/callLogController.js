@@ -7,8 +7,72 @@ exports.createCallLog = async (
   res
 ) => {
   try {
+
+    const call =
+      req.body.call || {};
+
+    const analytics =
+      req.body.analytics || {};
+
+    const extra =
+      analytics.extra_information || {};
+
     const callLog =
-      await CallLog.create(req.body);
+      await CallLog.create({
+
+        summary:
+          analytics.summary || "",
+
+        outcome:
+          analytics.outcome || "",
+
+        fromNumber:
+          extra.from ||
+          call.caller ||
+          "Unknown",
+
+        toNumber:
+          extra.to ||
+          "Unknown",
+
+        callDuration:
+          parseFloat(
+            call.duration_seconds || 0
+          ),
+
+        callRecordingURL:
+          call.recording_url || "",
+
+        callEndReason:
+          call.end_reason || "",
+
+        agentId:
+          call.agent_id || "",
+
+        callType:
+          call.direction === "inbound"
+            ? "inbound"
+            : "outbound",
+
+        taskId: "",
+
+        attempt: 1,
+
+        call_id:
+          call.id,
+
+        turns:
+          call.tool_calls_count || 0,
+
+        name:
+          extra.name ||
+          extra.Name ||
+          "Caller",
+
+        LeadCode: null,
+
+        StatusId: null
+      });
 
     res.status(201).json({
       success: true,
@@ -18,6 +82,9 @@ exports.createCallLog = async (
     });
 
   } catch (error) {
+
+    console.error(error);
+
     res.status(500).json({
       success: false,
       message: error.message

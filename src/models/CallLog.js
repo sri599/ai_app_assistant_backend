@@ -13,14 +13,14 @@ const CallLogSchema = new mongoose.Schema(
     },
 
     fromNumber: {
-      type: String,
-      required: true
-    },
+  type: String,
+  default: null
+},
 
-    toNumber: {
-      type: String,
-      required: true
-    },
+toNumber: {
+  type: String,
+  default: null
+},
 
     callDuration: {
       type: Number,
