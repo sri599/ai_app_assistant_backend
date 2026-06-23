@@ -13,7 +13,10 @@ const callLogController =
   auth,
   callLogController.getMyCallLogs
 );
-
+router.get(
+  "/admin/user/:userId",
+  callLogController.getUserCallLogsForAdmin
+);
 router.post(
   "/",
   callLogController.createCallLog

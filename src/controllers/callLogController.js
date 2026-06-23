@@ -117,7 +117,32 @@ exports.createCallLog = async (
     });
   }
 };
+exports.getUserCallLogsForAdmin =
+  async (req, res) => {
+    try {
 
+      const logs =
+        await CallLog.find({
+          userId: req.params.userId
+        })
+        .sort({
+          createdAt: -1
+        });
+
+      res.json({
+        success: true,
+        count: logs.length,
+        logs
+      });
+
+    } catch (error) {
+
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  };
 
 // GET ALL
 exports.getCallLogs = async (
