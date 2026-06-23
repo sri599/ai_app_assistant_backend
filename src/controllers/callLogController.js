@@ -1,7 +1,6 @@
 const CallLog = require("../models/CallLog");
 const User = require("../models/User");
 
-// CREATE
 exports.createCallLog = async (
   req,
   res
@@ -16,13 +15,33 @@ exports.createCallLog = async (
 
     const extra =
       analytics.extra_information || {};
-      const user = await User.findOne({
-  aiNumber: extra.to
-});
+
+    // Match user by last 10 digits of AI number
+    const targetNumber =
+      (extra.to || "").slice(-10);
+
+    const user =
+      await User.findOne({
+        aiNumber: {
+          $regex: targetNumber + "$"
+        }
+      });
+
+    console.log(
+      "Incoming AI Number:",
+      extra.to
+    );
+
+    console.log(
+      "Matched User:",
+      user?._id
+    );
 
     const callLog =
       await CallLog.create({
-        userId: user?._id || null,
+
+        userId:
+          user?._id || null,
 
         summary:
           analytics.summary || "",
@@ -87,7 +106,10 @@ exports.createCallLog = async (
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "Create Call Log Error:",
+      error
+    );
 
     res.status(500).json({
       success: false,
