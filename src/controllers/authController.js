@@ -53,15 +53,24 @@ exports.login = async (req, res) => {
   try {
     const { phoneNumber, password } = req.body;
 
-    const user =
-  await User.findOne({
-    phoneNumber
-  });
+    const user = await User.findOne({
+      phoneNumber
+    });
 
     if (!user) {
       return res.status(400).json({
         success: false,
         message: "Invalid credentials",
+      });
+    }
+
+    if (user.isDeleted) {
+      return res.status(403).json({
+        success: false,
+        deleted: true,
+        deletedAt: user.deletedAt,
+        message:
+          "Your account has been deleted. Please contact support.",
       });
     }
 
@@ -78,20 +87,19 @@ exports.login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      {
-        userId: user._id
-      },
+      { userId: user._id },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "30d",
-      }
+      { expiresIn: "30d" }
     );
 
     res.json({
-  success: true,
-  token,
-  role: user.role
-});
+      success: true,
+      token,
+      role: user.role,
+      deleted: false,
+      deletedAt: null,
+    });
+
   } catch (error) {
     res.status(500).json({
       success: false,
