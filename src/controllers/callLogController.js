@@ -121,13 +121,13 @@ exports.getUserCallLogsForAdmin =
   async (req, res) => {
     try {
 
-      const logs =
-        await CallLog.find({
-          userId: req.params.userId
-        })
-        .sort({
-          createdAt: -1
-        });
+      const logs = await CallLog.find({
+  userId: req.params.userId
+})
+.populate("userId", "name phoneNumber")
+.sort({
+  createdAt: -1
+});
 
       res.json({
         success: true,
@@ -151,11 +151,11 @@ exports.getCallLogs = async (
 ) => {
   try {
 
-    const logs =
-      await CallLog.find()
-        .sort({
-          createdAt: -1
-        });
+    const logs = await CallLog.find()
+  .populate("userId", "name phoneNumber")
+  .sort({
+    createdAt: -1
+  });
 
     res.json({
       success: true,
@@ -174,13 +174,13 @@ exports.getMyCallLogs =
   async (req, res) => {
     try {
 
-      const logs =
-        await CallLog.find({
-          userId: req.userId
-        })
-        .sort({
-          createdAt: -1
-        });
+      const logs = await CallLog.find({
+  userId: req.userId
+})
+.populate("userId", "name phoneNumber")
+.sort({
+  createdAt: -1
+});
 
       res.json({
         success: true,
@@ -202,11 +202,12 @@ exports.getMyCallLogs =
 exports.getCallLogById =
   async (req, res) => {
     try {
-
-      const log =
-        await CallLog.findById(
-          req.params.id
-        );
+      const log = await CallLog.findById(
+  req.params.id
+).populate(
+  "userId",
+  "name phoneNumber"
+);
 
       if (!log) {
         return res.status(404).json({
