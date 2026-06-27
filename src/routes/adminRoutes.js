@@ -105,8 +105,8 @@ router.delete(
 );
 router.put(
   "/ai-number/:id/price",
-  auth,
-  admin,
+  authMiddleware,
+  adminMiddleware,
   adminController.updateAiNumberPrice
 );
 
