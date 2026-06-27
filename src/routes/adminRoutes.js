@@ -103,5 +103,11 @@ router.delete(
   adminMiddleware,
   adminController.deleteAdmin
 );
+router.put(
+  "/ai-number/:id/price",
+  auth,
+  admin,
+  adminController.updateAiNumberPrice
+);
 
 module.exports = router;

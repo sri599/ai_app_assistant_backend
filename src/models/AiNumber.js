@@ -9,6 +9,10 @@ const aiNumberSchema =
         required: true,
         unique: true
       },
+      price: {
+  type: Number,
+  default: 0
+},
 
       status: {
         type: String,

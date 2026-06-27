@@ -430,8 +430,9 @@ exports.addAiNumber =
     try {
 
       const {
-        phoneNumber
-      } = req.body;
+  phoneNumber,
+  price
+} = req.body;
 
       const existing =
         await AiNumber.findOne({
@@ -446,10 +447,11 @@ exports.addAiNumber =
         });
       }
 
-      const number =
-        await AiNumber.create({
-          phoneNumber
-        });
+        const number =
+  await AiNumber.create({
+    phoneNumber,
+    price
+  });
 
       res.json({
         success: true,
@@ -464,6 +466,37 @@ exports.addAiNumber =
       });
     }
   };
+  exports.updateAiNumberPrice = async (req, res) => {
+  try {
+
+    const { price } = req.body;
+
+    const number = await AiNumber.findById(req.params.id);
+
+    if (!number) {
+      return res.status(404).json({
+        success: false,
+        message: "AI Number not found"
+      });
+    }
+
+    number.price = price;
+
+    await number.save();
+
+    res.json({
+      success: true,
+      message: "Price updated successfully",
+      number
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
   exports.makeAiNumberFree = async (req, res) => {
   try {
     const number = await AiNumber.findById(req.params.id);
