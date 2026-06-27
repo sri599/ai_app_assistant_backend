@@ -2,6 +2,15 @@ const mongoose = require("mongoose");
 
 const CallLogSchema = new mongoose.Schema(
   {
+    billingRate:{
+    type:Number,
+    default:0
+},
+
+callCost:{
+    type:Number,
+    default:0
+},
     userId: {
   type: mongoose.Schema.Types.ObjectId,
   ref: "User",

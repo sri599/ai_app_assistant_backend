@@ -1,6 +1,7 @@
 const CallLog = require("../models/CallLog");
 const User = require("../models/User");
-
+const BillingSetting =
+require("../models/BillingSetting");
 exports.createCallLog = async (
   req,
   res
@@ -36,6 +37,20 @@ exports.createCallLog = async (
       "Matched User:",
       user?._id
     );
+    const setting =
+await BillingSetting.findOne();
+
+const rate =
+setting?.pricePerMinute || 0.80;
+
+const duration =
+parseFloat(call.duration_seconds || 0);
+
+const minutes =
+duration / 60;
+
+const cost =
+Number((minutes * rate).toFixed(2));
 
     const callLog =
       await CallLog.create({
@@ -94,7 +109,9 @@ exports.createCallLog = async (
 
         LeadCode: null,
 
-        StatusId: null
+        StatusId: null,
+        billingRate: rate,
+callCost: cost,
       });
 
     res.status(201).json({
