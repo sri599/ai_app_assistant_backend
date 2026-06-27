@@ -2,14 +2,30 @@ const mongoose = require("mongoose");
 
 const CallLogSchema = new mongoose.Schema(
   {
-    billingRate:{
-    type:Number,
-    default:0
+ billingRate: {
+    type: Number,
+    default: 0
 },
 
-callCost:{
-    type:Number,
-    default:0
+billedMinutes: {
+    type: Number,
+    default: 0
+},
+
+callCost: {
+    type: Number,
+    default: 0
+},
+
+billed: {
+    type: Boolean,
+    default: false
+},
+
+invoiceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Invoice",
+    default: null
 },
     userId: {
   type: mongoose.Schema.Types.ObjectId,
@@ -106,6 +122,18 @@ toNumber: {
     timestamps: true
   }
 );
+CallLogSchema.index({
+    userId: 1,
+    createdAt: -1
+});
+
+CallLogSchema.index({
+    call_id: 1
+});
+
+CallLogSchema.index({
+    createdAt: -1
+});
 
 module.exports = mongoose.model(
   "CallLog",

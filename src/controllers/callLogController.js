@@ -16,6 +16,16 @@ exports.createCallLog = async (
 
     const extra =
       analytics.extra_information || {};
+    const existingCall = await CallLog.findOne({
+    call_id: call.id
+});
+
+if (existingCall) {
+    return res.json({
+        success: true,
+        message: "Call log already exists"
+    });
+}
 
     // Match user by last 10 digits of AI number
     const targetNumber =
@@ -46,11 +56,11 @@ setting?.pricePerMinute || 0.80;
 const duration =
 parseFloat(call.duration_seconds || 0);
 
-const minutes =
-duration / 60;
+const billedMinutes = Math.ceil(duration / 60);
 
-const cost =
-Number((minutes * rate).toFixed(2));
+const cost = Number(
+    (billedMinutes * rate).toFixed(2)
+);
 
     const callLog =
       await CallLog.create({
@@ -73,10 +83,7 @@ Number((minutes * rate).toFixed(2));
           extra.to ||
           "Unknown",
 
-        callDuration:
-          parseFloat(
-            call.duration_seconds || 0
-          ),
+        callDuration: duration,
 
         callRecordingURL:
           call.recording_url || "",
@@ -110,8 +117,14 @@ Number((minutes * rate).toFixed(2));
         LeadCode: null,
 
         StatusId: null,
-        billingRate: rate,
-callCost: cost,
+      
+    billingRate: rate,
+    billedMinutes: billedMinutes,
+
+
+    callCost: cost,
+
+    billed: false
       });
 
     res.status(201).json({
