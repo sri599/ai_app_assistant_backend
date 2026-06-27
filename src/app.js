@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const paymentRoutes = require("./routes/paymentRoutes");
 const authRoutes = require("./routes/authRoutes");
+const billingRoutes = require("./routes/billingRoutes");
 const subscriptionRoutes = require(
   "./routes/subscriptionRoutes"
 );
@@ -25,6 +26,10 @@ app.get("/", (req, res) => {
     message: "AI Call Assistant API Running",
   });
 });
+app.use(
+  "/api/billing",
+  billingRoutes
+);
 
 app.use(
   "/api/payment",
