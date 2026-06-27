@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-
+const paymentRoutes = require("./routes/paymentRoutes");
 const authRoutes = require("./routes/authRoutes");
 const subscriptionRoutes = require(
   "./routes/subscriptionRoutes"
@@ -26,7 +26,10 @@ app.get("/", (req, res) => {
   });
 });
 
-
+app.use(
+  "/api/payment",
+  paymentRoutes
+);
 app.use(
   "/api/admin",
   adminRoutes
