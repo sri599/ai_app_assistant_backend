@@ -194,19 +194,68 @@ exports.dashboard = async (req, res) => {
       await User.countDocuments({
         subscriptionStatus: "active"
       });
+      const totalPayments =
+  await Payment.countDocuments();
+
+const successfulPayments =
+  await Payment.countDocuments({
+    status: "paid"
+  });
+
+const failedPayments =
+  await Payment.countDocuments({
+    status: "failed"
+  });
+
+const cancelledPayments =
+  await Payment.countDocuments({
+    status: "cancelled"
+  });
+
+const revenue =
+  await Payment.aggregate([
+    {
+      $match: {
+        status: "paid"
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        total: {
+          $sum: "$amount"
+        }
+      }
+    }
+  ]);
 
     res.json({
-      success: true,
 
-      totalUsers,
-      totalAdmins,
+  success:true,
 
-      totalAiNumbers,
-      assignedNumbers,
-      freeNumbers,
+  totalUsers,
+  totalAdmins,
 
-      activeSubscriptions
-    });
+  totalAiNumbers,
+  assignedNumbers,
+  freeNumbers,
+
+  activeSubscriptions,
+
+  totalPayments,
+
+  successfulPayments,
+
+  failedPayments,
+
+  cancelledPayments,
+
+  totalRevenue:
+    revenue.length
+      ? revenue[0].total
+      : 0
+
+});
 
   } catch (error) {
     res.status(500).json({
@@ -214,6 +263,241 @@ exports.dashboard = async (req, res) => {
       message: error.message
     });
   }
+};
+exports.getAllPayments = async (req,res)=>{
+
+try{
+
+const payments =
+await Payment.find()
+
+.populate(
+"userId",
+"name phoneNumber"
+)
+
+.populate(
+"aiNumberId",
+"phoneNumber price"
+)
+
+.sort({
+createdAt:-1
+});
+
+res.json({
+
+success:true,
+
+count:payments.length,
+
+payments
+
+});
+
+}
+catch(error){
+
+res.status(500).json({
+
+success:false,
+
+message:error.message
+
+});
+
+}
+
+};
+exports.getPaymentById = async (req,res)=>{
+
+try{
+
+const payment =
+await Payment.findById(req.params.id)
+
+.populate(
+"userId",
+"name phoneNumber"
+)
+
+.populate(
+"aiNumberId",
+"phoneNumber price"
+);
+
+if(!payment){
+
+return res.status(404).json({
+
+success:false,
+
+message:"Payment not found"
+
+});
+
+}
+
+res.json({
+
+success:true,
+
+payment
+
+});
+
+}
+catch(error){
+
+res.status(500).json({
+
+success:false,
+
+message:error.message
+
+});
+
+}
+
+};
+exports.getPaymentsByUser = async(req,res)=>{
+
+try{
+
+const payments=
+await Payment.find({
+
+userId:req.params.userId
+
+})
+
+.populate(
+
+"aiNumberId",
+
+"phoneNumber price"
+
+)
+
+.sort({
+
+createdAt:-1
+
+});
+
+res.json({
+
+success:true,
+
+count:payments.length,
+
+payments
+
+});
+
+}
+catch(error){
+
+res.status(500).json({
+
+success:false,
+
+message:error.message
+
+});
+
+}
+
+};
+exports.updatePaymentStatus = async(req,res)=>{
+
+try{
+
+const payment =
+await Payment.findById(req.params.id);
+
+if(!payment){
+
+return res.status(404).json({
+
+success:false,
+
+message:"Payment not found"
+
+});
+
+}
+
+payment.status=req.body.status;
+
+await payment.save();
+
+res.json({
+
+success:true,
+
+message:"Status updated",
+
+payment
+
+});
+
+}
+catch(error){
+
+res.status(500).json({
+
+success:false,
+
+message:error.message
+
+});
+
+}
+
+};
+exports.deletePayment = async(req,res)=>{
+
+try{
+
+const payment =
+await Payment.findByIdAndDelete(
+req.params.id
+);
+
+if(!payment){
+
+return res.status(404).json({
+
+success:false,
+
+message:"Payment not found"
+
+});
+
+}
+
+res.json({
+
+success:true,
+
+message:"Payment deleted"
+
+});
+
+}
+catch(error){
+
+res.status(500).json({
+
+success:false,
+
+message:error.message
+
+});
+
+}
+
 };
 
 exports.getUsers = async (
