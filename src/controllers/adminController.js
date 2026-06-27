@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const Payment = require("../models/Payment");
 const subscriptions = require("../data/subscriptions");
  const AiNumber =
   require("../models/AiNumber");
