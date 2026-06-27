@@ -24,6 +24,11 @@ router.get(
   auth,
   billingController.getBillingSettings
 );
+router.put(
+  "/settings",
+  auth,
+  billingController.saveBillingSettings
+);
 
 /*
 |--------------------------------------------------------------------------
