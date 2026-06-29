@@ -1,0 +1,307 @@
+const Invoice = require("../models/Invoice");
+const CallLog = require("../models/CallLog");
+
+
+// Generate Invoice (Admin)
+exports.generateInvoice = async (req, res) => {
+  try {
+
+    const userId = req.params.userId;
+
+    const logs = await CallLog.find({
+      userId,
+      billed: false
+    });
+
+    if (!logs.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No calls available for billing"
+      });
+    }
+
+    const totalCalls = logs.length;
+
+    const billedMinutes = logs.reduce(
+      (sum, log) => sum + (log.billedMinutes || 0),
+      0
+    );
+
+    const totalAmount = logs.reduce(
+      (sum, log) => sum + (log.callCost || 0),
+      0
+    );
+
+    const invoice = await Invoice.create({
+
+      invoiceNo: "INV-" + Date.now(),
+
+      userId,
+
+      billingCycle: "monthly",
+
+      fromDate: logs[0].createdAt,
+
+      toDate: new Date(),
+
+      totalCalls,
+
+      billedMinutes,
+
+      totalAmount,
+
+      currency: "INR",
+
+      status: "Pending"
+
+    });
+
+    await CallLog.updateMany(
+      {
+        _id: {
+          $in: logs.map(l => l._id)
+        }
+      },
+      {
+        $set: {
+          billed: true
+        }
+      }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Invoice generated successfully",
+      invoice
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
+  }
+};
+
+
+// Admin - All Invoices
+exports.getAllInvoices = async (req, res) => {
+
+  try {
+
+    const invoices = await Invoice.find()
+      .populate(
+        "userId",
+        "name phoneNumber aiNumber"
+      )
+      .sort({
+        createdAt: -1
+      });
+
+    res.json({
+
+      success: true,
+
+      count: invoices.length,
+
+      invoices
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
+  }
+
+};
+
+
+// User - My Invoices
+exports.getMyInvoices = async (req, res) => {
+
+  try {
+
+    const invoices = await Invoice.find({
+      userId: req.userId
+    }).sort({
+      createdAt: -1
+    });
+
+    res.json({
+
+      success: true,
+
+      count: invoices.length,
+
+      invoices
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      success: false,
+
+      message: error.message
+
+    });
+
+  }
+
+};
+
+
+// Get Single Invoice
+exports.getInvoiceById = async (req, res) => {
+
+  try {
+
+    const invoice = await Invoice.findById(
+      req.params.id
+    ).populate(
+      "userId",
+      "name phoneNumber aiNumber"
+    );
+
+    if (!invoice) {
+
+      return res.status(404).json({
+
+        success: false,
+
+        message: "Invoice not found"
+
+      });
+
+    }
+
+    res.json({
+
+      success: true,
+
+      invoice
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      success: false,
+
+      message: error.message
+
+    });
+
+  }
+
+};
+
+
+// Admin - Mark Invoice Paid
+exports.markInvoicePaid = async (req, res) => {
+
+  try {
+
+    const invoice = await Invoice.findById(
+      req.params.id
+    );
+
+    if (!invoice) {
+
+      return res.status(404).json({
+
+        success: false,
+
+        message: "Invoice not found"
+
+      });
+
+    }
+
+    invoice.status = "Paid";
+
+    invoice.paidAt = new Date();
+
+    await invoice.save();
+
+    res.json({
+
+      success: true,
+
+      message: "Invoice marked as Paid",
+
+      invoice
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      success: false,
+
+      message: error.message
+
+    });
+
+  }
+
+};
+
+
+// Admin - Cancel Invoice
+exports.cancelInvoice = async (req, res) => {
+
+  try {
+
+    const invoice = await Invoice.findById(
+      req.params.id
+    );
+
+    if (!invoice) {
+
+      return res.status(404).json({
+
+        success: false,
+
+        message: "Invoice not found"
+
+      });
+
+    }
+
+    invoice.status = "Cancelled";
+
+    await invoice.save();
+
+    res.json({
+
+      success: true,
+
+      message: "Invoice cancelled",
+
+      invoice
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      success: false,
+
+      message: error.message
+
+    });
+
+  }
+
+};

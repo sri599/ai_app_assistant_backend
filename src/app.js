@@ -3,6 +3,8 @@ const cors = require("cors");
 const paymentRoutes = require("./routes/paymentRoutes");
 const authRoutes = require("./routes/authRoutes");
 const billingRoutes = require("./routes/billingRoutes");
+const invoiceRoutes =
+require("./routes/invoiceRoutes");
 const subscriptionRoutes = require(
   "./routes/subscriptionRoutes"
 );
@@ -55,5 +57,9 @@ app.use(
 app.use(
   "/api/call-logs",
   callLogRoutes
+);
+app.use(
+    "/api/invoices",
+    invoiceRoutes
 );
 module.exports = app;
