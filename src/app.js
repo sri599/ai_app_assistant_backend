@@ -17,6 +17,9 @@ const aiNumberRoutes =
   );
   const callLogRoutes =
   require("./routes/callLogRoutes");
+  const invoiceSettlementRoutes=require(
+"./routes/invoiceSettlementRoutes"
+);
 const app = express();
 
 app.use(cors());
@@ -61,5 +64,12 @@ app.use(
 app.use(
     "/api/invoices",
     invoiceRoutes
+);
+app.use(
+
+"/api/invoice-settlement",
+
+invoiceSettlementRoutes
+
 );
 module.exports = app;
