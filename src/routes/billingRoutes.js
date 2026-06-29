@@ -49,5 +49,10 @@ router.get(
   auth,
   billingController.getUserBillingSummary
 );
+router.get(
+  "/summary",
+  auth,
+  billingController.getAllUsersBillingSummary
+);
 
 module.exports = router;
