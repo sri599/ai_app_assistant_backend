@@ -5,94 +5,88 @@ const razorpay=require("../config/razorpay");
 const Invoice=require("../models/Invoice");
 
 const InvoiceSettlement=require("../models/InvoiceSettlement");
-exports.createInvoiceOrder=async(req,res)=>{
+exports.createInvoiceOrder = async (req, res) => {
+  try {
+    console.log("Request Body:", req.body);
 
-try{
+    const { invoiceId } = req.body;
 
-const invoiceId=req.body.invoiceId;
+    if (!invoiceId) {
+      return res.status(400).json({
+        success: false,
+        message: "invoiceId is required"
+      });
+    }
 
-const invoice=await Invoice.findById(invoiceId);
+    const invoice = await Invoice.findById(invoiceId);
 
-if(!invoice){
+    console.log("Invoice:", invoice);
 
-return res.status(404).json({
+    if (!invoice) {
+      return res.status(404).json({
+        success: false,
+        message: "Invoice not found"
+      });
+    }
 
-success:false,
+    if (invoice.status === "Paid") {
+      return res.status(400).json({
+        success: false,
+        message: "Invoice already paid"
+      });
+    }
 
-message:"Invoice not found"
+    const amount = Math.round(Number(invoice.totalAmount) * 100);
 
-});
+    console.log({
+      amount,
+      currency: invoice.currency,
+      receipt: invoice.invoiceNo
+    });
 
-}
+    const order = await razorpay.orders.create({
+      amount,
+      currency: invoice.currency || "INR",
+      receipt: invoice.invoiceNo,
+      notes: {
+        invoiceId: invoice._id.toString(),
+        userId: invoice.userId.toString()
+      }
+    });
 
-if(invoice.status==="Paid"){
+    console.log("Order:", order);
 
-return res.status(400).json({
+    const settlement = await InvoiceSettlement.create({
+      invoiceId: invoice._id,
+      userId: invoice.userId,
+      amount: invoice.totalAmount,
+      paymentMethod: "Razorpay",
+      status: "Pending",
+      razorpayOrderId: order.id
+    });
 
-success:false,
+    console.log("Settlement:", settlement);
 
-message:"Invoice already paid"
+    return res.json({
+      success: true,
+      key: process.env.RAZORPAY_KEY_ID,
+      order,
+      invoice
+    });
 
-});
+  } catch (error) {
+    console.error("============== ERROR ==============");
+    console.error(error);
+    console.error(error.message);
+    console.error(error.stack);
+    console.error("===================================");
 
-}
-
-const order=await razorpay.orders.create({
-
-amount:invoice.totalAmount*100,
-
-currency:invoice.currency,
-
-receipt:invoice.invoiceNo,
-
-notes:{
-
-invoiceId:invoice._id.toString(),
-
-userId:invoice.userId.toString()
-
-}
-
-});
-
-await InvoiceSettlement.create({
-
-invoiceId:invoice._id,
-
-userId:invoice.userId,
-
-amount:invoice.totalAmount,
-
-status:"Pending",
-
-razorpayOrderId:order.id
-
-});
-
-res.json({
-
-success:true,
-
-key:process.env.RAZORPAY_KEY_ID,
-
-order,
-
-invoice
-
-});
-
-}catch(error){
-
-res.status(500).json({
-
-success:false,
-
-message:error.message
-
-});
-
-}
-
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      stack: error.stack
+    });
+  }
 };
 exports.verifyInvoicePayment=async(req,res)=>{
 
