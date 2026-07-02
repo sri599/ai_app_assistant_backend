@@ -1,6 +1,7 @@
 const Invoice = require("../models/Invoice");
 const CallLog = require("../models/CallLog");
-
+const User = require("../models/User");
+const { sendPushNotification } = require("../utils/pushNotification");
 
 // Generate Invoice (Admin)
 exports.generateInvoice = async (req, res) => {
@@ -68,6 +69,20 @@ exports.generateInvoice = async (req, res) => {
         }
       }
     );
+    if (user?.fcmToken) {
+  await sendPushNotification(
+    user.fcmToken,
+    "New Invoice Generated",
+    `A new invoice of ₹${totalAmount.toFixed(2)} has been generated.`,
+    {
+      type: "invoice",
+      invoiceId: invoice._id.toString(),
+      invoiceNo: invoice.invoiceNo,
+      amount: totalAmount.toFixed(2),
+      status: invoice.status,
+    }
+  );
+}
 
     res.status(201).json({
       success: true,
