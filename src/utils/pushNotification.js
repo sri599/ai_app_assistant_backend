@@ -11,16 +11,6 @@ const sendPushNotification = async (token, title, body, data = {}) => {
         body,
       },
       data,
-      android: {
-        priority: "high",
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: "default",
-          },
-        },
-      },
     });
 
     console.log("Push notification sent.");
