@@ -69,6 +69,7 @@ exports.generateInvoice = async (req, res) => {
         }
       }
     );
+    const user = await User.findById(userId);
     if (user?.fcmToken) {
   await sendPushNotification(
     user.fcmToken,
