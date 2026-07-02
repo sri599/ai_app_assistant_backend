@@ -2,6 +2,7 @@ const Invoice = require("../models/Invoice");
 const CallLog = require("../models/CallLog");
 const User = require("../models/User");
 const { sendPushNotification } = require("../utils/pushNotification");
+const { sendEmail } = require("../utils/email");
 
 // Generate Invoice (Admin)
 exports.generateInvoice = async (req, res) => {
@@ -84,7 +85,48 @@ exports.generateInvoice = async (req, res) => {
     }
   );
 }
+if (user?.email) {
+  await sendEmail(
+    user.email,
+    "New Invoice Generated",
+    `
+      <h2>Invoice Generated</h2>
 
+      <p>Hello ${user.name || "User"},</p>
+
+      <p>Your invoice has been generated.</p>
+
+      <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+          <td><b>Invoice No</b></td>
+          <td>${invoice.invoiceNo}</td>
+        </tr>
+
+        <tr>
+          <td><b>Total Calls</b></td>
+          <td>${invoice.totalCalls}</td>
+        </tr>
+
+        <tr>
+          <td><b>Billed Minutes</b></td>
+          <td>${invoice.billedMinutes}</td>
+        </tr>
+
+        <tr>
+          <td><b>Total Amount</b></td>
+          <td>₹${invoice.totalAmount.toFixed(2)}</td>
+        </tr>
+
+        <tr>
+          <td><b>Status</b></td>
+          <td>${invoice.status}</td>
+        </tr>
+      </table>
+
+      <p>Thank you,<br>Sharyx AI Assistant</p>
+    `
+  );
+}
     res.status(201).json({
       success: true,
       message: "Invoice generated successfully",

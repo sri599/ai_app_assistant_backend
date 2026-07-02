@@ -1,6 +1,7 @@
 const CallLog = require("../models/CallLog");
 const User = require("../models/User");
 const { sendPushNotification } = require("../utils/pushNotification");
+const { sendEmail } = require("../utils/email");
 const BillingSetting =
 require("../models/BillingSetting");
 exports.createCallLog = async (
@@ -136,6 +137,40 @@ const cost = Number(
       callId: callLog._id.toString(),
       type: "call_log"
     }
+  );
+}
+if (user?.email) {
+  await sendEmail(
+    user.email,
+    "New AI Call Received",
+    `
+      <h2>New AI Call</h2>
+
+      <p>Hello ${user.name || "User"},</p>
+
+      <p>Your AI assistant has received a new call.</p>
+
+      <table border="1" cellpadding="8" cellspacing="0">
+        <tr>
+          <td><b>Caller</b></td>
+          <td>${callLog.fromNumber}</td>
+        </tr>
+        <tr>
+          <td><b>Type</b></td>
+          <td>${callLog.callType}</td>
+        </tr>
+        <tr>
+          <td><b>Duration</b></td>
+          <td>${callLog.callDuration} seconds</td>
+        </tr>
+        <tr>
+          <td><b>Cost</b></td>
+          <td>₹${callLog.callCost}</td>
+        </tr>
+      </table>
+
+      <p>Thank you,<br>Sharyx AI Assistant</p>
+    `
   );
 }
 
