@@ -16,20 +16,9 @@ const transporter = nodemailer.createTransport({
 
 const sendEmail = async (to, subject, html) => {
   try {
-    console.log("Starting email...");
-
-    console.log("EMAIL_USER:", process.env.EMAIL_USER);
-    console.log(
-      "EMAIL_PASSWORD:",
-      process.env.EMAIL_PASSWORD ? "Loaded" : "Missing"
-    );
-
-    console.log("Verifying SMTP...");
     await transporter.verify();
-
     console.log("SMTP Connected");
 
-    console.log("Sending email...");
     await transporter.sendMail({
       from: `"Sharyx AI Assistant" <${process.env.EMAIL_USER}>`,
       to,
@@ -37,9 +26,8 @@ const sendEmail = async (to, subject, html) => {
       html,
     });
 
-    console.log("Email sent");
+    console.log("Email sent to", to);
   } catch (err) {
-    console.error("Email Error:");
     console.error(err);
   }
 };
