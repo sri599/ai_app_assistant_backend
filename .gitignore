@@ -3,3 +3,4 @@ node_modules/
 logs/
 dist/
 serviceAccountKey.json
+config/firebase-service-account.json

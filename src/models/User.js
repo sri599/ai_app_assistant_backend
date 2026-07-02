@@ -12,11 +12,21 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true
     },
+    email: {
+  type: String,
+  default: null,
+  trim: true,
+  lowercase: true
+},
 
     password: {
       type: String,
       required: true
     },
+    fcmToken: {
+  type: String,
+  default: null
+},
 
     role: {
       type: String,

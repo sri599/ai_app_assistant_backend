@@ -5,7 +5,12 @@ const User = require("../models/User");
 
 exports.register = async (req, res) => {
   try {
-    const { name, phoneNumber, password } = req.body;
+    const {
+  name,
+  phoneNumber,
+  email,
+  password
+} = req.body;
 
     const existingUser = await User.findOne({
       phoneNumber
@@ -26,11 +31,13 @@ exports.register = async (req, res) => {
     const user = new User({
       name,
       phoneNumber,
+      email: email || null,
       password: hashedPassword,
       role: "user",
       aiNumber: null,
       subscriptionStatus: "inactive",
-      subscription: null
+      subscription: null,
+      fcmToken: null,
     });
 
     await user.save();
@@ -51,7 +58,11 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { phoneNumber, password } = req.body;
+    const {
+  phoneNumber,
+  password,
+  fcmToken
+} = req.body;
 
     const user = await User.findOne({
       phoneNumber
@@ -85,6 +96,10 @@ exports.login = async (req, res) => {
         message: "Invalid credentials",
       });
     }
+    if (fcmToken) {
+  user.fcmToken = fcmToken;
+  await user.save();
+}
 
     const token = jwt.sign(
       { userId: user._id },

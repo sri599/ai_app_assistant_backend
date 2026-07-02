@@ -126,6 +126,17 @@ const cost = Number(
 
     billed: false
       });
+    if (user && user.fcmToken) {
+  await sendPushNotification(
+    user.fcmToken,
+    "New AI Call",
+    `You received a ${callLog.callType} call from ${callLog.fromNumber}.`,
+    {
+      callId: callLog._id.toString(),
+      type: "call_log"
+    }
+  );
+}
 
     res.status(201).json({
       success: true,
