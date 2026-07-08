@@ -3,6 +3,7 @@ const cors = require("cors");
 const paymentRoutes = require("./routes/paymentRoutes");
 const authRoutes = require("./routes/authRoutes");
 const billingRoutes = require("./routes/billingRoutes");
+const agentDetailsRoutes = require("./routes/agentDetailsRoutes");
 const invoiceRoutes =
 require("./routes/invoiceRoutes");
 const subscriptionRoutes = require(
@@ -72,4 +73,5 @@ app.use(
 invoiceSettlementRoutes
 
 );
+app.use("/api/agent-details", agentDetailsRoutes);
 module.exports = app;
