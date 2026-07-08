@@ -4,5 +4,6 @@ const { getAgentDetails } = require("../controllers/agentDetailsController");
 const auth = require("../middleware/authMiddleware");
 router.get("/me", auth, getAgentDetails);          // user: own agent
 router.get("/:userId", auth, getAgentDetails);     // admin: agent for a given userId
-
+router.put("/me", auth, updateAgentDetails);
+router.put("/:userId", auth, updateAgentDetails);
 module.exports = router;

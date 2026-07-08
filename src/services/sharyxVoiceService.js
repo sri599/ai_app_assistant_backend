@@ -45,5 +45,22 @@ async function callWithToken(url) {
 
 const getAllAgents = () => callWithToken(`${BASE_URL}/agent/list`);
 const getAgentById = (agentId) => callWithToken(`${BASE_URL}/agent/byid/${agentId}`);
+async function updateAgent(agentId, fullPayload) {
+  const token = await getVoiceToken();
+  try {
+    const res = await axios.put(
+      `${BASE_URL}/agent/update/${agentId}`,
+      fullPayload,
+      { headers: { Cookie: `token=${token}` } }
+    );
+    return res.data?.AddtionalData;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      cachedToken = null;
+      throw new Error("VOICE_TOKEN_EXPIRED");
+    }
+    throw new Error("VOICE_UPDATE_FAILED");
+  }
+}
 
-module.exports = { getAllAgents, getAgentById };
+module.exports = { getAllAgents, getAgentById, updateAgent };
