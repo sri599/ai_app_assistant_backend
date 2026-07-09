@@ -194,48 +194,35 @@ if (user?.email) {
     });
   }
 };
-exports.getUserCallLogsForAdmin =
-  async (req, res) => {
-    try {
-
-      const logs = await CallLog.find({
-  userId: req.params.userId
-})
-.populate("userId", "name phoneNumber")
-.sort({
-  createdAt: -1
-});
-
-      res.json({
-        success: true,
-        count: logs.length,
-        logs
-      });
-
-    } catch (error) {
-
-      res.status(500).json({
-        success: false,
-        message: error.message
-      });
-    }
-  };
-
-// GET ALL
-exports.getCallLogs = async (
-  req,
-  res
-) => {
+exports.getUserCallLogsForAdmin = async (req, res) => {
   try {
 
-    const logs = await CallLog.find()
-  .populate("userId", "name phoneNumber")
-  .sort({
-    createdAt: -1
-  });
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit) || 20, 1);
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      userId: req.params.userId
+    };
+
+    const [logs, totalRecords] = await Promise.all([
+      CallLog.find(filter)
+        .populate("userId", "name phoneNumber")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      CallLog.countDocuments(filter)
+    ]);
 
     res.json({
       success: true,
+      page,
+      limit,
+      totalRecords,
+      totalPages: Math.ceil(totalRecords / limit),
+      hasNextPage: page * limit < totalRecords,
+      hasPrevPage: page > 1,
       count: logs.length,
       logs
     });
@@ -247,33 +234,84 @@ exports.getCallLogs = async (
     });
   }
 };
-exports.getMyCallLogs =
-  async (req, res) => {
-    try {
 
-      const logs = await CallLog.find({
-  userId: req.userId
-})
-.populate("userId", "name phoneNumber")
-.sort({
-  createdAt: -1
-});
+exports.getCallLogs = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit) || 20, 1);
+    const skip = (page - 1) * limit;
 
-      res.json({
-        success: true,
-        count: logs.length,
-        logs
-      });
+    const filter = {};
 
-    } catch (error) {
+    const [logs, totalRecords] = await Promise.all([
+      CallLog.find(filter)
+        .populate("userId", "name phoneNumber")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
 
-      res.status(500).json({
-        success: false,
-        message:
-          error.message
-      });
-    }
-  };
+      CallLog.countDocuments(filter)
+    ]);
+
+    res.json({
+      success: true,
+      page,
+      limit,
+      totalRecords,
+      totalPages: Math.ceil(totalRecords / limit),
+      hasNextPage: page * limit < totalRecords,
+      hasPrevPage: page > 1,
+      count: logs.length,
+      logs
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+exports.getMyCallLogs = async (req, res) => {
+  try {
+
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit) || 20, 1);
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      userId: req.userId
+    };
+
+    const [logs, totalRecords] = await Promise.all([
+      CallLog.find(filter)
+        .populate("userId", "name phoneNumber")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      CallLog.countDocuments(filter)
+    ]);
+
+    res.json({
+      success: true,
+      page,
+      limit,
+      totalRecords,
+      totalPages: Math.ceil(totalRecords / limit),
+      hasNextPage: page * limit < totalRecords,
+      hasPrevPage: page > 1,
+      count: logs.length,
+      logs
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 
 // GET BY ID
 exports.getCallLogById =
