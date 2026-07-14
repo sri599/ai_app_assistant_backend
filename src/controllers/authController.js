@@ -74,14 +74,14 @@ exports.login = async (req, res) => {
         message: "Invalid credentials",
       });
     }
-
     if (user.isDeleted) {
       return res.status(403).json({
         success: false,
         deleted: true,
+        code: "ACCOUNT_DEACTIVATED",
         deletedAt: user.deletedAt,
         message:
-          "Your account has been deleted. Please contact support.",
+          "Your account has been deactivated. Please contact support.",
       });
     }
 
