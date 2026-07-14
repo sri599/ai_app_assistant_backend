@@ -54,7 +54,21 @@ async function updateAgent(agentId, fullPayload) {
       fullPayload,
       { headers: { Cookie: `token=${token}` } }
     );
-    return res.data?.AddtionalData;
+
+    // TEMP: log the raw shape so we can see exactly what Sharyx returns.
+    console.log("Sharyx updateAgent raw response:", JSON.stringify(res.data));
+
+    if (res.data?.AddtionalData) {
+      return res.data.AddtionalData;
+    }
+    // Some Sharyx endpoints return the object directly instead of
+    // wrapping it in AddtionalData — fall back to that shape too.
+    if (res.data && typeof res.data === "object" && res.data.id) {
+      return res.data;
+    }
+    // Update endpoint didn't return the updated agent at all — refetch
+    // it explicitly so callers always get a real agent object back.
+    return await getAgentById(agentId);
   } catch (error) {
     if (error.response?.status === 401) {
       cachedToken = null;
@@ -63,7 +77,6 @@ async function updateAgent(agentId, fullPayload) {
     throw new Error("VOICE_UPDATE_FAILED");
   }
 }
-
 /**
  * GET /admin/providers
  * The response shape here differs from other endpoints — it's not
