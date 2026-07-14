@@ -45,6 +45,7 @@ async function callWithToken(url) {
 
 const getAllAgents = () => callWithToken(`${BASE_URL}/agent/list`);
 const getAgentById = (agentId) => callWithToken(`${BASE_URL}/agent/byid/${agentId}`);
+
 async function updateAgent(agentId, fullPayload) {
   const token = await getVoiceToken();
   try {
@@ -63,4 +64,31 @@ async function updateAgent(agentId, fullPayload) {
   }
 }
 
-module.exports = { getAllAgents, getAgentById, updateAgent };
+/**
+ * GET /admin/providers
+ * The response shape here differs from other endpoints — it's not
+ * wrapped in AddtionalData, it's a raw array (per the sample you shared).
+ * Unwrap defensively so this keeps working if that ever changes.
+ */
+async function getAllProviders() {
+  const token = await getVoiceToken();
+  try {
+    const res = await axios.get(`${BASE_URL}/admin/providers`, {
+      headers: { Cookie: `token=${token}` },
+    });
+    const data = res.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.AddtionalData)) return data.AddtionalData;
+    if (Array.isArray(data?.providers)) return data.providers;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
+  } catch (error) {
+    if (error.response?.status === 401) {
+      cachedToken = null;
+      throw new Error("VOICE_TOKEN_EXPIRED");
+    }
+    throw new Error("VOICE_PROVIDERS_FAILED");
+  }
+}
+
+module.exports = { getAllAgents, getAgentById, updateAgent, getAllProviders };

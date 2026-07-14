@@ -1,6 +1,7 @@
 const User = require("../models/User");
-const { getAllAgents, getAgentById, updateAgent } = require("../services/sharyxVoiceService");
-
+const { getAllAgents, getAgentById, updateAgent, getAllProviders } = require("../services/sharyxVoiceService");
+const { detectLanguage, sttPreferred, llmPreferred } = require("../utils/agentLanguageDefaults");
+const { resolveProvider } = require("../utils/providerResolver");
 
 exports.getAgentDetails = async (req, res) => {
   try {
@@ -46,6 +47,7 @@ exports.getAgentDetails = async (req, res) => {
     res.status(500).json({ success: false, stage: "unknown", message: error.message });
   }
 };
+
 exports.updateAgentDetails = async (req, res) => {
   try {
     const targetUserId = req.params.userId || req.userId;
@@ -84,10 +86,42 @@ exports.updateAgentDetails = async (req, res) => {
 
     const editable = req.body;
 
+    // --- Resolve language ---------------------------------------------
+    // Trust an explicit language field if the client sends one and it's
+    // valid; otherwise detect it from the text actually being saved.
+    const combinedText = [
+      editable.system_prompt ?? current.system_prompt,
+      editable.welcome_message ?? current.welcome_message,
+      editable.silent_message ?? current.silent_message,
+    ].join(" ");
+
+    const language =
+      editable.language === "English" || editable.language === "Tamil"
+        ? editable.language
+        : detectLanguage(combinedText);
+
+    // --- Resolve STT/LLM provider for that language --------------------
+    let providers = [];
+    try {
+      providers = await getAllProviders();
+    } catch (error) {
+      // Non-fatal — if this fails we just keep the agent's existing
+      // stt/llm config instead of blocking the whole save.
+      console.warn("Provider fetch failed, keeping existing stt/llm config:", error.message);
+      providers = [];
+    }
+
+    const resolvedStt = providers.length
+      ? resolveProvider({ providers, type: "stt", language, preferenceMap: sttPreferred })
+      : null;
+    const resolvedLlm = providers.length
+      ? resolveProvider({ providers, type: "llm", language, preferenceMap: llmPreferred })
+      : null;
+
     const payload = {
       name: current.name,
       description: editable.description ?? current.description,
-      language: current.language,
+      language,
       phone: current.phone,
       webcall_provider_id: current.webcall_provider_id || "",
       is_draft: current.is_draft,
@@ -105,17 +139,17 @@ exports.updateAgentDetails = async (req, res) => {
       tts_voice_id: current.agent_tts?.[0]?.voice_id,
       background_sound: current.agent_tts?.[0]?.background_sound || "off",
       background_sound_url: current.agent_tts?.[0]?.background_sound_url || "",
-      llm_provider_id: current.agent_llm?.[0]?.provider_id,
+      llm_provider_id: resolvedLlm?.providerId ?? current.agent_llm?.[0]?.provider_id,
       llm_config: current.agent_llm?.[0]?.config,
       first_message_mode: current.first_message_mode,
       first_message: current.first_message || "",
       objective: editable.objective ?? current.objective,
-      llm_model: current.agent_llm?.[0]?.model,
-      llm_provider: current.agent_llm?.[0]?.provider?.name,
-      model: current.agent_llm?.[0]?.model,
-      stt_provider_id: current.agent_stt?.[0]?.provider_id,
+      llm_model: resolvedLlm?.model ?? current.agent_llm?.[0]?.model,
+      llm_provider: resolvedLlm?.providerName ?? current.agent_llm?.[0]?.provider?.name,
+      model: resolvedLlm?.model ?? current.agent_llm?.[0]?.model,
+      stt_provider_id: resolvedStt?.providerId ?? current.agent_stt?.[0]?.provider_id,
       stt_config: current.agent_stt?.[0]?.config,
-      stt_model: current.agent_stt?.[0]?.model,
+      stt_model: resolvedStt?.model ?? current.agent_stt?.[0]?.model,
       llm_api_key_set: current.agent_llm?.[0]?.api_key_set ?? "false",
       llm_api_key: null,
       tts_api_key_set: current.agent_tts?.[0]?.api_key_set ?? "false",
