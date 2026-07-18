@@ -408,7 +408,95 @@ exports.getMyCurrentMonthCallLogs = async (req, res) => {
     });
   }
 };
+exports.getMyTodayCallLogs = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit) || 20, 1);
+    const skip = (page - 1) * limit;
 
+    // Start of today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    // Start of tomorrow
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    const filter = {
+      userId: req.userId,
+      createdAt: {
+        $gte: startOfDay,
+        $lt: endOfDay,
+      },
+    };
+
+    // Get paginated logs
+    const [logs, totalRecords] = await Promise.all([
+      CallLog.find(filter)
+        .populate("userId", "name phoneNumber")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      CallLog.countDocuments(filter),
+    ]);
+
+    // Get today's summary
+    const summaryResult = await CallLog.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(req.userId),
+          createdAt: {
+            $gte: startOfDay,
+            $lt: endOfDay,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCalls: { $sum: 1 },
+          totalMinutes: { $sum: "$billedMinutes" },
+          totalCost: { $sum: "$callCost" },
+        },
+      },
+    ]);
+
+    const summary =
+      summaryResult.length > 0
+        ? {
+            totalCalls: summaryResult[0].totalCalls,
+            totalMinutes: summaryResult[0].totalMinutes,
+            totalCost: Number(summaryResult[0].totalCost.toFixed(2)),
+          }
+        : {
+            totalCalls: 0,
+            totalMinutes: 0,
+            totalCost: 0,
+          };
+
+    res.json({
+      success: true,
+      date: startOfDay.toISOString().split("T")[0], // e.g. 2026-07-18
+      summary,
+      page,
+      limit,
+      totalRecords,
+      totalPages: Math.ceil(totalRecords / limit),
+      hasNextPage: page * limit < totalRecords,
+      hasPrevPage: page > 1,
+      count: logs.length,
+      logs,
+    });
+  } catch (error) {
+    console.error("Today's Call Logs Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 // GET BY ID
 exports.getCallLogById =
   async (req, res) => {

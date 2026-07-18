@@ -22,6 +22,11 @@ router.get(
   auth,
   callLogController.getMyCurrentMonthCallLogs
 );
+router.get(
+  "/my-calls/today",
+  auth,
+  callLogController.getMyTodayCallLogs
+);
 router.post(
   "/",
   callLogController.createCallLog
