@@ -17,6 +17,11 @@ router.get(
   "/admin/user/:userId",
   callLogController.getUserCallLogsForAdmin
 );
+router.get(
+  "/my-calls/current-month",
+  auth,
+  callLogController.getMyCurrentMonthCallLogs
+);
 router.post(
   "/",
   callLogController.createCallLog

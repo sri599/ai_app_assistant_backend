@@ -312,6 +312,87 @@ exports.getMyCallLogs = async (req, res) => {
     });
   }
 };
+exports.getMyCurrentMonthCallLogs = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit) || 20, 1);
+    const skip = (page - 1) * limit;
+
+    // Current month start
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    // Next month start
+    const endOfMonth = new Date(startOfMonth);
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+
+    const filter = {
+      userId: req.userId,
+      createdAt: {
+        $gte: startOfMonth,
+        $lt: endOfMonth,
+      },
+    };
+
+    const [logs, totalRecords] = await Promise.all([
+      CallLog.find(filter)
+        .populate("userId", "name phoneNumber")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+
+      CallLog.countDocuments(filter),
+    ]);
+
+    // Optional summary
+    const summary = await CallLog.aggregate([
+      {
+        $match: {
+          userId: req.userId,
+          createdAt: {
+            $gte: startOfMonth,
+            $lt: endOfMonth,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCalls: { $sum: 1 },
+          totalMinutes: { $sum: "$billedMinutes" },
+          totalCost: { $sum: "$callCost" },
+        },
+      },
+    ]);
+
+    res.json({
+      success: true,
+      month: startOfMonth.toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      }),
+      summary: summary[0] || {
+        totalCalls: 0,
+        totalMinutes: 0,
+        totalCost: 0,
+      },
+      page,
+      limit,
+      totalRecords,
+      totalPages: Math.ceil(totalRecords / limit),
+      hasNextPage: page * limit < totalRecords,
+      hasPrevPage: page > 1,
+      count: logs.length,
+      logs,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 // GET BY ID
 exports.getCallLogById =
