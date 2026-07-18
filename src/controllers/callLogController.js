@@ -1,5 +1,7 @@
 const CallLog = require("../models/CallLog");
 const User = require("../models/User");
+const mongoose = require("mongoose");
+
 const { sendPushNotification } = require("../utils/pushNotification");
 const { sendEmail } = require("../utils/email");
 const BillingSetting =
@@ -312,6 +314,7 @@ exports.getMyCallLogs = async (req, res) => {
     });
   }
 };
+
 exports.getMyCurrentMonthCallLogs = async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1);
@@ -335,6 +338,7 @@ exports.getMyCurrentMonthCallLogs = async (req, res) => {
       },
     };
 
+    // Get paginated logs
     const [logs, totalRecords] = await Promise.all([
       CallLog.find(filter)
         .populate("userId", "name phoneNumber")
@@ -345,11 +349,11 @@ exports.getMyCurrentMonthCallLogs = async (req, res) => {
       CallLog.countDocuments(filter),
     ]);
 
-    // Optional summary
-    const summary = await CallLog.aggregate([
+    // Get current month summary
+    const summaryResult = await CallLog.aggregate([
       {
         $match: {
-          userId: req.userId,
+          userId: new mongoose.Types.ObjectId(req.userId),
           createdAt: {
             $gte: startOfMonth,
             $lt: endOfMonth,
@@ -366,17 +370,26 @@ exports.getMyCurrentMonthCallLogs = async (req, res) => {
       },
     ]);
 
+    const summary =
+      summaryResult.length > 0
+        ? {
+            totalCalls: summaryResult[0].totalCalls,
+            totalMinutes: summaryResult[0].totalMinutes,
+            totalCost: Number(summaryResult[0].totalCost.toFixed(2)),
+          }
+        : {
+            totalCalls: 0,
+            totalMinutes: 0,
+            totalCost: 0,
+          };
+
     res.json({
       success: true,
       month: startOfMonth.toLocaleString("default", {
         month: "long",
         year: "numeric",
       }),
-      summary: summary[0] || {
-        totalCalls: 0,
-        totalMinutes: 0,
-        totalCost: 0,
-      },
+      summary,
       page,
       limit,
       totalRecords,
@@ -387,6 +400,8 @@ exports.getMyCurrentMonthCallLogs = async (req, res) => {
       logs,
     });
   } catch (error) {
+    console.error("Current Month Call Logs Error:", error);
+
     res.status(500).json({
       success: false,
       message: error.message,
