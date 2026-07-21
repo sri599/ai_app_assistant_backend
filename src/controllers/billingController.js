@@ -136,6 +136,7 @@ exports.getAllUsersBillingSummary = async (req, res) => {
 
       const logs = await CallLog.find({
         userId: user._id,
+        isTestCall: false,
         createdAt: {
           $gte: startDate
         }
@@ -257,6 +258,7 @@ exports.getMyBillingSummary = async (req, res) => {
 
     const logs = await CallLog.find({
       userId: req.userId,
+      isTestCall: false,
       createdAt: {
         $gte: startDate
       }
@@ -364,6 +366,7 @@ exports.getUserBillingSummary = async (req, res) => {
 
    const logs = await CallLog.find({
     userId: req.params.userId,
+    isTestCall: false,
     createdAt: {
         $gte: startDate
     }
