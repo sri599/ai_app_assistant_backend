@@ -13,6 +13,7 @@ const callLogController =
   auth,
   callLogController.getMyCallLogs
 );
+router.get("/my-calls/billing", auth, callLogController.getMyBillingCallLogs);
 router.get(
   "/admin/user/:userId",
   callLogController.getUserCallLogsForAdmin
