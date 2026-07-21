@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const CallLogSchema = new mongoose.Schema(
   {
+    isTestCall: {
+  type: Boolean,
+  default: false
+},
  billingRate: {
     type: Number,
     default: 0

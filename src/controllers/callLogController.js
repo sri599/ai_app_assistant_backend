@@ -17,6 +17,12 @@ exports.createCallLog = async (
 
     const analytics =
       req.body.analytics || {};
+      const normalize = (num = "") =>
+  num.replace(/\D/g, "").slice(-10);
+
+const isTestCall =
+  user &&
+  normalize(user.phoneNumber) === normalize(extra.from);
 
     const extra =
       analytics.extra_information || {};
@@ -128,7 +134,8 @@ const cost = Number(
 
     callCost: cost,
 
-    billed: false
+    billed: false,
+    isTestCall
       });
     if (user && user.fcmToken) {
   await sendPushNotification(
