@@ -51,6 +51,6 @@ router.delete(
   "/:id",
   callLogController.deleteCallLog
 );
-router.get("/billing/:userId", getBillingCallLogs);
+router.get("/billing/:userId", callLogController.getBillingCallLogs);
 
 module.exports = router;
