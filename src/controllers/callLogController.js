@@ -243,6 +243,42 @@ exports.getUserCallLogsForAdmin = async (req, res) => {
     });
   }
 };
+exports.getBillingCallLogs = async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.max(parseInt(req.query.limit) || 20, 1);
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      userId: req.params.userId,
+      isTestCall: false,
+      billed: false
+    };
+
+    const [logs, totalRecords] = await Promise.all([
+      CallLog.find(filter)
+        .populate("userId", "name phoneNumber")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      CallLog.countDocuments(filter)
+    ]);
+
+    res.json({
+      success: true,
+      page,
+      limit,
+      totalRecords,
+      totalPages: Math.ceil(totalRecords / limit),
+      hasNextPage: page * limit < totalRecords,
+      hasPrevPage: page > 1,
+      count: logs.length,
+      logs
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 exports.getCallLogs = async (req, res) => {
   try {

@@ -12,7 +12,8 @@ exports.generateInvoice = async (req, res) => {
 
     const logs = await CallLog.find({
       userId,
-      billed: false
+      billed: false,
+      isTestCall: false 
     });
 
     if (!logs.length) {
