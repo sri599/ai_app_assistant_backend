@@ -17,12 +17,6 @@ exports.createCallLog = async (
 
     const analytics =
       req.body.analytics || {};
-      const normalize = (num = "") =>
-  num.replace(/\D/g, "").slice(-10);
-
-const isTestCall =
-  user &&
-  normalize(user.phoneNumber) === normalize(extra.from);
 
     const extra =
       analytics.extra_information || {};
@@ -47,6 +41,12 @@ if (existingCall) {
           $regex: targetNumber + "$"
         }
       });
+       const normalize = (num = "") =>
+  num.replace(/\D/g, "").slice(-10);
+
+const isTestCall =
+  user &&
+  normalize(user.phoneNumber) === normalize(extra.from);
 
     console.log(
       "Incoming AI Number:",
