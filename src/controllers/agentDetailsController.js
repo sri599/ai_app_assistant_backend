@@ -1,5 +1,6 @@
 const User = require("../models/User");
-const PERSONALITIES = require("../utils/agentPersonalities");
+const CONFIG_OPTIONS = require('../utils/agentConfigOptions');
+
 const { getAllAgents, getAgentById, updateAgent, getAllProviders } = require("../services/sharyxVoiceService");
 const { detectLanguage, presets, sttPreferred, llmPreferred } = require("../utils/agentLanguageDefaults");
 const { resolveProvider } = require("../utils/providerResolver");
@@ -267,55 +268,87 @@ exports.switchAgentLanguage = async (req, res) => {
   }
 };
 
-exports.getAgentPersonalities = async (req, res) => {
-  const personalities = Object.values(PERSONALITIES).map(p => ({
-    id: p.id,
-    name: p.name,
-    description: p.description
-  }));
-
+exports.getAgentConfigOptions = async (req, res) => {
   res.json({
     success: true,
-    personalities
+    options: CONFIG_OPTIONS
   });
 };
-
-exports.switchAgentPersonality = async (req, res) => {
+exports.updateAgentConfiguration = async (req, res) => {
   try {
     const targetUserId = req.params.userId || req.userId;
-    const { personality } = req.body;
 
-    if (!PERSONALITIES[personality]) {
-      return res.status(400).json({
-        success: false,
-        stage: "validation",
-        message: "Invalid personality."
-      });
-    }
+    const {
+      name,
+      age,
+      role,
+      personality,
+      tone,
+      speakingSpeed,
+      energyLevel,
+      empathyLevel,
+      humorLevel,
+      confidenceLevel,
+      formality,
+      responseLength
+    } = req.body;
 
     const { matchedAgent, current } = await findUserAgent(targetUserId);
 
-    const personalitySection = `## Personality
+    // Personality full text
+    const personalityText = personality
+      ? PERSONALITIES[personality]?.prompt?.trim() || personality
+      : 'Be warm, caring and friendly.';
 
-${PERSONALITIES[personality].prompt.trim()}`;
+    const configBlock = `## Agent Configuration
 
-    let updatedPrompt = current.system_prompt || "";
+Name:
+${name || 'Neya'}
 
-    // Matches everything under "## Personality" until the next heading
-    // starting with "## " or the end of the prompt.
-    const personalityRegex = /## Personality\s*[\s\S]*?(?=\n##\s|\n#\s|$)/;
+Age:
+${age || '28'}
 
-    if (personalityRegex.test(updatedPrompt)) {
-      // Replace existing personality section
-      updatedPrompt = updatedPrompt.replace(
-        personalityRegex,
-        personalitySection
-      );
+Role:
+${role || 'Personal AI Call Assistant'}
+
+Personality:
+${personalityText}
+
+Tone:
+${tone || 'Friendly and conversational'}
+
+Speaking Speed:
+${speakingSpeed || 'Normal'}
+
+Energy Level:
+${energyLevel || 'Medium'}
+
+Empathy Level:
+${empathyLevel || 'High'}
+
+Confidence:
+${confidenceLevel || 'High'}
+
+Humor Level:
+${humorLevel || 'Low'}
+
+Formality:
+${formality || 'Professional'}
+
+Response Length:
+${responseLength || 'Short'}`;
+
+    let updatedPrompt = current.system_prompt || '';
+
+    // Replace existing Agent Configuration block
+    const configRegex = /## Agent Configuration\\s*[\\s\\S]*?(?=\\nRole:|\\nLanguage Style Rule|$)/;
+
+    if (configRegex.test(updatedPrompt)) {
+      updatedPrompt = updatedPrompt.replace(configRegex, configBlock);
     } else {
-      // Append personality section
-      updatedPrompt = `${updatedPrompt.trim()}
+      updatedPrompt = `${configBlock}
 
-${personalitySection}`;
+${updatedPrompt.trim()}`;
     }
 
     const editable = {
@@ -332,14 +365,13 @@ ${personalitySection}`;
 
     res.json({
       success: true,
-      personality,
       agent: updated
     });
 
   } catch (error) {
     res.status(error.status || 500).json({
       success: false,
-      stage: error.stage || "unknown",
+      stage: error.stage || 'unknown',
       message: error.message
     });
   }
