@@ -283,28 +283,40 @@ exports.getAgentPersonalities = async (req, res) => {
 exports.switchAgentPersonality = async (req, res) => {
   try {
     const targetUserId = req.params.userId || req.userId;
-
     const { personality } = req.body;
 
     if (!PERSONALITIES[personality]) {
       return res.status(400).json({
         success: false,
+        stage: "validation",
         message: "Invalid personality."
       });
     }
 
     const { matchedAgent, current } = await findUserAgent(targetUserId);
 
-    const personalityPrompt = PERSONALITIES[personality].prompt;
+    const personalitySection = `## Personality
 
-    const updatedPrompt = current.system_prompt.replace(
-      /## Personality[\s\S]*?## End Personality/,
-      `## Personality
+${PERSONALITIES[personality].prompt.trim()}`;
 
-${personalityPrompt}
+    let updatedPrompt = current.system_prompt || "";
 
-## End Personality`
-    );
+    // Matches everything under "## Personality" until the next heading
+    // starting with "## " or the end of the prompt.
+    const personalityRegex = /## Personality\s*[\s\S]*?(?=\n##\s|\n#\s|$)/;
+
+    if (personalityRegex.test(updatedPrompt)) {
+      // Replace existing personality section
+      updatedPrompt = updatedPrompt.replace(
+        personalityRegex,
+        personalitySection
+      );
+    } else {
+      // Append personality section
+      updatedPrompt = `${updatedPrompt.trim()}
+
+${personalitySection}`;
+    }
 
     const editable = {
       system_prompt: updatedPrompt
