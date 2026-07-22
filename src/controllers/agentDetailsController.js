@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const PERSONALITIES = require("../utils/agentPersonalities");
 const { getAllAgents, getAgentById, updateAgent, getAllProviders } = require("../services/sharyxVoiceService");
 const { detectLanguage, presets, sttPreferred, llmPreferred } = require("../utils/agentLanguageDefaults");
 const { resolveProvider } = require("../utils/providerResolver");
@@ -216,17 +217,6 @@ exports.updateAgentDetails = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/agent-details/me/language
- * Body: { language: "English" | "Tamil" }
- *
- * Fully backend-driven language switch:
- * - Loads the preset system_prompt / welcome_message / silent_message
- *   for the target language.
- * - Resolves the matching STT/LLM provider for that language.
- * - Saves everything to Sharyx in one call.
- * Flutter only needs to send the target language string.
- */
 exports.switchAgentLanguage = async (req, res) => {
   try {
     const targetUserId = req.params.userId || req.userId;
@@ -273,6 +263,72 @@ exports.switchAgentLanguage = async (req, res) => {
       success: false,
       stage: error.stage || "unknown",
       message: error.message,
+    });
+  }
+};
+
+exports.getAgentPersonalities = async (req, res) => {
+  const personalities = Object.values(PERSONALITIES).map(p => ({
+    id: p.id,
+    name: p.name,
+    description: p.description
+  }));
+
+  res.json({
+    success: true,
+    personalities
+  });
+};
+
+exports.switchAgentPersonality = async (req, res) => {
+  try {
+    const targetUserId = req.params.userId || req.userId;
+
+    const { personality } = req.body;
+
+    if (!PERSONALITIES[personality]) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid personality."
+      });
+    }
+
+    const { matchedAgent, current } = await findUserAgent(targetUserId);
+
+    const personalityPrompt = PERSONALITIES[personality].prompt;
+
+    const updatedPrompt = current.system_prompt.replace(
+      /## Personality[\s\S]*?## End Personality/,
+      `## Personality
+
+${personalityPrompt}
+
+## End Personality`
+    );
+
+    const editable = {
+      system_prompt: updatedPrompt
+    };
+
+    const payload = buildPayload({
+      current,
+      editable,
+      language: current.language
+    });
+
+    const updated = await updateAgent(matchedAgent.id, payload);
+
+    res.json({
+      success: true,
+      personality,
+      agent: updated
+    });
+
+  } catch (error) {
+    res.status(error.status || 500).json({
+      success: false,
+      stage: error.stage || "unknown",
+      message: error.message
     });
   }
 };
