@@ -1,6 +1,6 @@
 const User = require("../models/User");
 const CONFIG_OPTIONS = require('../utils/agentConfigOptions');
-
+const PERSONALITIES = require("../utils/agentPersonalities");
 const { getAllAgents, getAgentById, updateAgent, getAllProviders } = require("../services/sharyxVoiceService");
 const { detectLanguage, presets, sttPreferred, llmPreferred } = require("../utils/agentLanguageDefaults");
 const { resolveProvider } = require("../utils/providerResolver");
@@ -268,11 +268,11 @@ exports.switchAgentLanguage = async (req, res) => {
   }
 };
 
-exports.getAgentConfigOptions = async (req, res) => {
-  res.json({
-    success: true,
-    options: CONFIG_OPTIONS
-  });
+exports.getAgentConfigurationOptions = async (req, res) => {
+    res.json({
+        success: true,
+        options: CONFIG_OPTIONS
+    });
 };
 exports.updateAgentConfiguration = async (req, res) => {
   try {
@@ -341,8 +341,8 @@ ${responseLength || 'Short'}`;
     let updatedPrompt = current.system_prompt || '';
 
     // Replace existing Agent Configuration block
-    const configRegex = /## Agent Configuration\\s*[\\s\\S]*?(?=\\nRole:|\\nLanguage Style Rule|$)/;
-
+const configRegex =
+  /## Agent Configuration[\s\S]*?(?=\nLanguage Style Rule|$)/;
     if (configRegex.test(updatedPrompt)) {
       updatedPrompt = updatedPrompt.replace(configRegex, configBlock);
     } else {
