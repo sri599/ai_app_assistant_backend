@@ -2,7 +2,9 @@ const User = require("../models/User");
 const CONFIG_OPTIONS = require('../utils/agentConfigOptions');
 const PERSONALITIES = require("../utils/agentPersonalities");
 const { getAllAgents, getAgentById, updateAgent, getAllProviders } = require("../services/sharyxVoiceService");
-const { detectLanguage, presets, sttPreferred, llmPreferred } = require("../utils/agentLanguageDefaults");
+const { detectLanguage, sttPreferred, llmPreferred } = require("../utils/agentLanguageDefaults");
+const LANGUAGE_PRESETS = require("../utils/agentLanguagePresets");
+const LANGUAGE_WELCOME_MESSAGES = require("../utils/agentLanguageWelcomeMessages");
 const { resolveProvider } = require("../utils/providerResolver");
 
 // --- shared helper: find the sharyx agent that belongs to this user -----
@@ -223,26 +225,30 @@ exports.switchAgentLanguage = async (req, res) => {
     const targetUserId = req.params.userId || req.userId;
     const requestedLanguage = req.body?.language;
 
-    if (requestedLanguage !== "English" && requestedLanguage !== "Tamil") {
+    if (!["English", "Tamil", "Multilingual"].includes(requestedLanguage)) {
       return res.status(400).json({
         success: false,
         stage: "validation",
-        message: "language must be 'English' or 'Tamil'",
+        message: "language must be 'English', 'Tamil' or 'Multilingual'",
       });
     }
 
     const { matchedAgent, current } = await findUserAgent(targetUserId);
 
-    const preset = presets[requestedLanguage];
+    const languageBlock = LANGUAGE_PRESETS[requestedLanguage];
+    let updatedPrompt = current.system_prompt || "";
+    const langRegex = /## Language Configuration[\s\S]*?(?=\n## |$)/;
+    updatedPrompt = langRegex.test(updatedPrompt)
+      ? updatedPrompt.replace(langRegex, languageBlock)
+      : `${updatedPrompt.trim()}\n\n${languageBlock}`;
+
     const editable = {
-      system_prompt: preset.prompt,
-      welcome_message: preset.welcome,
-      silent_message: preset.silent,
-      // description, objective, silent_duration intentionally omitted
-      // so buildPayload() falls back to whatever's currently saved.
+      system_prompt: updatedPrompt,
+      welcome_message: LANGUAGE_WELCOME_MESSAGES[requestedLanguage],
     };
 
-    const { resolvedStt, resolvedLlm } = await resolveSttLlm(requestedLanguage);
+    const sttLlmLanguage = requestedLanguage === "Multilingual" ? "Tamil" : requestedLanguage;
+    const { resolvedStt, resolvedLlm } = await resolveSttLlm(sttLlmLanguage);
     const payload = buildPayload({
       current,
       editable,
@@ -341,8 +347,8 @@ ${responseLength || 'Short'}`;
     let updatedPrompt = current.system_prompt || '';
 
     // Replace existing Agent Configuration block
-const configRegex =
-  /## Agent Configuration[\s\S]*?(?=\nLanguage Style Rule|$)/;
+  const configRegex =
+  /## Agent Configuration[\s\S]*?(?=\n## Language Configuration|$)/;
     if (configRegex.test(updatedPrompt)) {
       updatedPrompt = updatedPrompt.replace(configRegex, configBlock);
     } else {
